@@ -8,7 +8,7 @@ const NopCommand = require('./lib/nopcommand')
 
 let deploymentConfig
 module.exports = (robot, _, Settings = require('./lib/settings')) => {
-  
+
   async function syncAllSettings (nop, context, repo = context.repo(), ref) {
 
     try {
@@ -302,7 +302,7 @@ module.exports = (robot, _, Settings = require('./lib/settings')) => {
     repo = getAddedRepoConfigName(payload)
     if (repo) {
       return syncSettings(false, context, repo)
-    } 
+    }
 
     let suborg = getModifiedSubOrgConfigName(payload)
     if (suborg) {
@@ -313,7 +313,7 @@ module.exports = (robot, _, Settings = require('./lib/settings')) => {
     if (suborg) {
       return syncSubOrgSettings(false, context, suborg)
     }
-    
+
     if (!settingsModified) {
       robot.log.debug(`No changes in '${Settings.FILE_NAME}' detected, returning...`)
       return
@@ -460,10 +460,10 @@ module.exports = (robot, _, Settings = require('./lib/settings')) => {
     robot.log.debug(`Updating check run ${JSON.stringify(params)}`)
     let res = await context.octokit.checks.update(params)
 
-    // guarding against null value from upstream libary that is 
+    // guarding against null value from upstream libary that is
     // causing a 404 and the check to stall
     // from issue: https://github.com/github/safe-settings/issues/185#issuecomment-1075240374
-    if (check_suite.before === "0000000000000000000000000000000000000000") 
+    if (check_suite.before === "0000000000000000000000000000000000000000")
     {
       check_suite.before = check_suite.pull_requests[0].base.sha;
     }
@@ -481,7 +481,7 @@ module.exports = (robot, _, Settings = require('./lib/settings')) => {
     }
     return syncAllSettings(true, context, context.repo(), pull_request.head.ref )
   })
-  
+
   robot.on('repository.created', async context => {
     const { payload } = context
     const { sender } = payload
@@ -512,5 +512,5 @@ module.exports = (robot, _, Settings = require('./lib/settings')) => {
     });
   }
 
-  
+
 }

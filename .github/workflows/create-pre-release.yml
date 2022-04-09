@@ -32,12 +32,12 @@ jobs:
             npm-${{ env.cache-name }}-
             npm-
       - run: npm install
-      - name: Tag a rc release 
+      - name: Tag a rc release
         id: rcrelease
         uses: actionsdesk/semver@0.6.0-rc.8
         with:
           bump: patch
           prerelease: withBuildNumber
           prelabel: rc
-  
- 
+
+

@@ -1,7 +1,5 @@
 # GitHub Safe-Settings
 
-Test line
-
 [![Create a release](https://github.com/github/safe-settings/actions/workflows/create-release.yml/badge.svg)](https://github.com/github/safe-settings/actions/workflows/create-release.yml)
 
 `Safe-settings` – an app to manage policy-as-code and apply repository settings across an organization.

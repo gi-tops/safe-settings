@@ -30,9 +30,12 @@
 > [!NOTE]
 > The `suborg` and `repo` level settings directory structure cannot be customized.
 >
-> Settings files must have a `.yml` extension only. For now, the `.yaml` extension is ignored.
+
 
 ## How it works
+
+`Safe-settings` is designed to run as a service listening for webhook events or as a scheduled job running on some regular cadence. It can also be triggered through GitHub Actions. (See the [How to use](#how-to-use) section for details on deploying and configuring.)
+
 
 ### Events
 The App listens to the following webhook events:
@@ -118,6 +121,46 @@ overridevalidators:
 ```
 
 A sample of `deployment-settings` file is found [here](docs/sample-settings/sample-deployment-settings.yml).
+
+### Custom Status Checks
+For branch protection rules and rulesets, you can allow for status checks to be defined outside of safe-settings together with your usual safe settings.
+
+This can be defined at the org, sub-org, and repo level.
+
+To configure this for branch protection rules, specify `{{EXTERNALLY_DEFINED}}` under the `contexts` keyword:
+```yaml
+branches:
+  - name: main
+    protection:
+      ...
+      required_status_checks:
+        contexts:
+          - "{{EXTERNALLY_DEFINED}}"
+```
+
+For rulesets, specify `{{EXTERNALLY_DEFINED}}` under the `required_status_checks` keyword:
+```yaml
+rulesets:
+  - name: Status Checks
+    ...
+    rules:
+      - type: required_status_checks
+        parameters:
+          required_status_checks:
+            - context: "{{EXTERNALLY_DEFINED}}"
+```
+
+Notes:
+  - For the same branch that is covered by multi-level branch protection rules, contexts defined at the org level are merged into the sub-org and repo level contexts, while contexts defined at the sub-org level are merged into the repo level contexts.
+  - Rules from the sub-org level are merged into the repo level when their ruleset share the same name. Becareful not to define the same rule type in both levels as it will be rejected by GitHub.
+  - When `{{EXTERNALLY_DEFINED}}` is defined for a new branch protection rule or ruleset configuration, they will be deployed with no status checks.
+  - When an existing branch protection rule or ruleset configuration is amended with `{{EXTERNALLY_DEFINED}}`, the status checks in the existing rules in GitHub will remain as is.
+
+> ⚠️ **Warning:**
+When `{{EXTERNALLY_DEFINED}}` is removed from an existing branch protection rule or ruleset configuration, the status checks in the existing rules in GitHub will revert to the checks that are defined in safe-settings. From this point onwards, all status checks configured through the GitHub UI will be reverted back to the safe-settings configuration.
+
+#### Status checks inheritance across scopes
+Refer to [Status checks](docs/status-checks.md).
 
 ### Performance
 When there are 1000s of repos to be managed -- and there is a global settings change -- safe-settings will have to work efficiently and only make the necessary API calls.
@@ -286,7 +329,21 @@ The following can be configured:
 - `Rulesets`
 - `Environments` - wait timer, required reviewers, prevent self review, protected branches deployment branch policy, custom deployment branch policy, variables, deployment protection rules
 
-It is possible to provide an `include` or `exclude` settings to restrict the `collaborators`, `teams`, `labels` to a list of repos or exclude a set of repos for a collaborator.
+> [!important]
+> It is possible to provide an `include` or `exclude` settings to restrict the `collaborators`, `teams`, `labels` to a list of repos or exclude a set of repos for a collaborator. 
+> The include/exclude pattern can also be for glob. For e.g.:
+```
+teams:
+  - name: Myteam-admins
+    permission: admin
+  - name: Myteam-developers
+    permission: push
+  - name: Other-team
+    permission: push
+    include:
+      - '*-config'
+```
+> Will only add `Other-team` to only `*-config` repos
 
 See [`docs/sample-settings/settings.yml`](docs/sample-settings/settings.yml) for a sample settings file.
 
@@ -364,11 +421,13 @@ You can pass environment variables; the easiest way to do it is via a `.env` fil
 
 ## How to use
 
-1. __[Deploy and install the app](docs/deploy.md)__.
+1. Create an `admin` repo (or an alternative of your choosing) within your organization. Remember to set `ADMIN_REPO` if you choose something other than `admin`. See [Environment variables](#environment-variables) for more details.
 
-2. Create an `admin` repo (or an alternative of your choosing) within your organization. Remember to set `CONFIG_REPO` if you choose something other than `admin`. See [Environment variables](#environment-variables) for more details.
+2. Add the settings for the `org`, `suborgs`, and `repos`. Sample files can be found [here](docs/sample-settings).
 
-3. Add the settings for the `org`, `suborgs`, and `repos`. Sample files can be found [here](docs/sample-settings).
+3. __[Deploy and install the app](docs/deploy.md)__.  Alternatively, the __[GitHub Actions Guide](docs/github-action.md)__ describes how to run `safe-settings` with GitHub Actions.
+
+
 
 
 ## License
